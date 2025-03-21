@@ -1,8 +1,13 @@
 #!/bin/sh
 
-LOG_FILE="$HOME/.local/share/game-launcher/game_time_log"
+SCRIPT_DIR="$HOME/.local/share/game-launcher"
+LOG_FILE="$SCRIPT_DIR/game_time_log"
 LAUNCHERS_DIR="$HOME/Scripts/Launchers"
-LAST_ENTRY_FILE="$HOME/.local/share/game-launcher/last_selected_launcher"
+LAST_ENTRY_FILE="$SCRIPT_DIR/last_selected_launcher"
+
+if [ ! -d "$SCRIPT_DIR" ]; then
+  mkdir -p "$SCRIPT_DIR"
+fi
 
 if [ ! -d "$LAUNCHERS_DIR" ]; then
   echo "Launchers directory not found: $LAUNCHERS_DIR"
