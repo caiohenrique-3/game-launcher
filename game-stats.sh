@@ -16,11 +16,20 @@ convert_playtime() {
   printf "%d:%02d:%02d" "$HOURS" "$MINUTES" "$SECONDS"
 }
 
-printf "%-20s | %-25s\n" "Game Name" "Total Playtime (hours:minutes:seconds)"
-printf "%-20s | %-25s\n" "--------------------" "--------------------------"
+# Determine maximum widths for columns dynamically
+MAX_GAME_NAME_WIDTH=$(awk -F',' '{ if (length($1) > max) max = length($1) } END { print (max > 20 ? max : 20) }' "$PLAYTIME_DB")
+HEADER_PLAYTIME="Total Playtime (hours:minutes:seconds)"
+MAX_PLAYTIME_WIDTH=${#HEADER_PLAYTIME}
+
+# Dynamically generate the underline lengths
+GAME_NAME_UNDERLINE=$(printf '%*s' "$MAX_GAME_NAME_WIDTH" '' | tr ' ' '-')
+PLAYTIME_UNDERLINE=$(printf '%*s' "$MAX_PLAYTIME_WIDTH" '' | tr ' ' '-')
+
+printf "%-*s | %s\n" "$MAX_GAME_NAME_WIDTH" "Game Name" "$HEADER_PLAYTIME"
+printf "%-*s | %s\n" "$MAX_GAME_NAME_WIDTH" "$GAME_NAME_UNDERLINE" "$PLAYTIME_UNDERLINE"
 
 # Read and process the database
 while IFS=',' read -r GAME_NAME TOTAL_PLAYTIME; do
   HUMAN_READABLE_PLAYTIME=$(convert_playtime "$TOTAL_PLAYTIME")
-  printf "%-20s | %-25s\n" "$GAME_NAME" "$HUMAN_READABLE_PLAYTIME"
+  printf "%-*s | %s\n" "$MAX_GAME_NAME_WIDTH" "$GAME_NAME" "$HUMAN_READABLE_PLAYTIME"
 done < "$PLAYTIME_DB"
