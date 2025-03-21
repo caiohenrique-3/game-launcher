@@ -8,75 +8,42 @@ LAST_ENTRY_FILE="$SCRIPT_DIR/data/last_selected"
 LAUNCHERS_DIR="$HOME/Scripts/Launchers"
 UPDATE_DB_SCRIPT="$SCRIPT_DIR/bin/update_db.sh"
 
-if [ ! -f "$LAST_ENTRY_FILE" ]; then
-  touch "$LAST_ENTRY_FILE"
-fi
+touch "$LAST_ENTRY_FILE"
 
-# Prompt to launch the last selected game if available
-if [ -f "$LAST_ENTRY_FILE" ]; then
-  LAST_SELECTED_LAUNCHER=$(cat "$LAST_ENTRY_FILE")
-  if [ -n "$LAST_SELECTED_LAUNCHER" ]; then
-    echo "Launch $LAST_SELECTED_LAUNCHER? (y/n) \c"
-    read -n 1 choice
-    echo
-    if [ "$choice" = "y" ]; then
-      LAUNCHER_PATH="$LAUNCHERS_DIR/$LAST_SELECTED_LAUNCHER"
-      if [ -x "$LAUNCHER_PATH" ]; then
-        START_TIME=$(date +%s)
+launch_game() {
+  local launcher=$1
+  local path="$LAUNCHERS_DIR/$launcher"
 
-        "$LAUNCHER_PATH" &
-        wait $!
-
-        END_TIME=$(date +%s)
-        PLAYTIME=$((END_TIME - START_TIME))
-
-        if [ $PLAYTIME -ge 5 ]; then
-          echo "$(date): Starting $LAST_SELECTED_LAUNCHER" >> "$LOG_FILE"
-          echo "$(date): Finished $LAST_SELECTED_LAUNCHER after $PLAYTIME seconds" >> "$LOG_FILE"
-          "$UPDATE_DB_SCRIPT" "$LAST_SELECTED_LAUNCHER" "$PLAYTIME"
-        fi
-        exit 0
-      else
-        echo "Selected launcher is not executable: $LAUNCHER_PATH"
-        exit 1
-      fi
-    fi
+  if [ ! -x "$path" ]; then
+    echo "Selected launcher is not executable: $path"
+    exit 1
   fi
-fi
 
-# Use fzf to select a new launcher
-if [ ! -d "$LAUNCHERS_DIR" ]; then
-  echo "Launchers directory not found: $LAUNCHERS_DIR"
-  exit 1
-fi
-
-SELECTED_LAUNCHER=$(find "$LAUNCHERS_DIR" -type f ! -name "*example*" -exec basename {} \; | fzf --prompt="Select a game: ")
-
-if [ -z "$SELECTED_LAUNCHER" ]; then
-  echo "No game selected. Exiting."
-  exit 0
-fi
-
-LAUNCHER_PATH="$LAUNCHERS_DIR/$SELECTED_LAUNCHER"
-
-if [ -x "$LAUNCHER_PATH" ]; then
-  echo "$SELECTED_LAUNCHER" > "$LAST_ENTRY_FILE"
-
-  START_TIME=$(date +%s)
-
-  "$LAUNCHER_PATH" &
+  local start_time=$(date +%s)
+  "$path" &
   wait $!
+  local end_time=$(date +%s)
+  local playtime=$((end_time - start_time))
 
-  END_TIME=$(date +%s)
-  PLAYTIME=$((END_TIME - START_TIME))
+  [ $playtime -ge 5 ] && {
+    echo "$(date): Starting $launcher" >> "$LOG_FILE"
+    echo "$(date): Finished $launcher after $playtime seconds" >> "$LOG_FILE"
+    "$UPDATE_DB_SCRIPT" "$launcher" "$playtime"
+  }
+}
 
-  if [ $PLAYTIME -ge 5 ]; then
-    echo "$(date): Starting $SELECTED_LAUNCHER" >> "$LOG_FILE"
-    echo "$(date): Finished $SELECTED_LAUNCHER after $PLAYTIME seconds" >> "$LOG_FILE"
-    "$UPDATE_DB_SCRIPT" "$SELECTED_LAUNCHER" "$PLAYTIME"
-  fi
-  exit 0
-else
-  echo "Selected launcher is not executable: $LAUNCHER_PATH"
-  exit 1
+if [ -s "$LAST_ENTRY_FILE" ]; then
+  last_selected_launcher=$(cat "$LAST_ENTRY_FILE")
+  echo "Launch $last_selected_launcher? (y/n) \c"
+  read -n 1 choice
+  echo
+  [ "$choice" = "y" ] && launch_game "$last_selected_launcher" && exit 0
 fi
+
+[ ! -d "$LAUNCHERS_DIR" ] && { echo "Launchers directory not found: $LAUNCHERS_DIR"; exit 1; }
+
+selected_launcher=$(find "$LAUNCHERS_DIR" -type f ! -name "*example*" -exec basename {} \; | fzf --prompt="Select a game: ")
+[ -z "$selected_launcher" ] && { echo "No game selected. Exiting."; exit 0; }
+
+echo "$selected_launcher" > "$LAST_ENTRY_FILE"
+launch_game "$selected_launcher"
