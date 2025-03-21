@@ -3,6 +3,7 @@
 SCRIPT_DIR="$HOME/.local/share/game-launcher"
 LOG_FILE="$SCRIPT_DIR/game_time_log"
 PLAYTIME_DB="$SCRIPT_DIR/game_playtime_db"
+NAME_MAP="$SCRIPT_DIR/game_name_map"
 LAUNCHERS_DIR="$HOME/Scripts/Launchers"
 LAST_ENTRY_FILE="$SCRIPT_DIR/last_selected_launcher"
 
@@ -19,16 +20,32 @@ if [ ! -f "$PLAYTIME_DB" ]; then
   touch "$PLAYTIME_DB"
 fi
 
+if [ ! -f "$NAME_MAP" ]; then
+  touch "$NAME_MAP"
+fi
+
+get_pretty_name() {
+  GAME="$1"
+  PRETTY_NAME=$(grep "^$GAME," "$NAME_MAP" | cut -d',' -f2)
+
+  if [ -n "$PRETTY_NAME" ]; then
+    echo "$PRETTY_NAME"
+  else
+    echo "$GAME" # Fallback to the original name if no mapping exists
+  fi
+}
+
 update_playtime_db() {
   GAME="$1"
   PLAYTIME="$2"
+  PRETTY_NAME=$(get_pretty_name "$GAME")
 
-  if grep -q "^$GAME," "$PLAYTIME_DB"; then
-    CURRENT_PLAYTIME=$(grep "^$GAME," "$PLAYTIME_DB" | cut -d',' -f2)
+  if grep -q "^$PRETTY_NAME," "$PLAYTIME_DB"; then
+    CURRENT_PLAYTIME=$(grep "^$PRETTY_NAME," "$PLAYTIME_DB" | cut -d',' -f2)
     TOTAL_PLAYTIME=$((CURRENT_PLAYTIME + PLAYTIME))
-    sed -i "s/^$GAME,.*/$GAME,$TOTAL_PLAYTIME/" "$PLAYTIME_DB"
+    sed -i "s/^$PRETTY_NAME,.*/$PRETTY_NAME,$TOTAL_PLAYTIME/" "$PLAYTIME_DB"
   else
-    echo "$GAME,$PLAYTIME" >> "$PLAYTIME_DB"
+    echo "$PRETTY_NAME,$PLAYTIME" >> "$PLAYTIME_DB"
   fi
 }
 
