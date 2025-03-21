@@ -22,15 +22,18 @@ if [ -f "$LAST_ENTRY_FILE" ]; then
   if [ "$choice" = "y" ]; then
     LAUNCHER_PATH="$LAUNCHERS_DIR/$LAST_SELECTED_LAUNCHER"
     if [ -x "$LAUNCHER_PATH" ]; then
-      echo "$(date): Starting $LAST_SELECTED_LAUNCHER" >> "$LOG_FILE"
       START_TIME=$(date +%s)
-      
+
       "$LAUNCHER_PATH" &
       wait $!
 
       END_TIME=$(date +%s)
       PLAYTIME=$((END_TIME - START_TIME))
-      echo "$(date): Finished $LAST_SELECTED_LAUNCHER after $PLAYTIME seconds" >> "$LOG_FILE"
+
+      if [ $PLAYTIME -ge 5 ]; then
+        echo "$(date): Starting $LAST_SELECTED_LAUNCHER" >> "$LOG_FILE"
+        echo "$(date): Finished $LAST_SELECTED_LAUNCHER after $PLAYTIME seconds" >> "$LOG_FILE"
+      fi
       exit 0
     else
       echo "Selected launcher is not executable: $LAUNCHER_PATH"
@@ -50,15 +53,18 @@ echo "$SELECTED_LAUNCHER" > "$LAST_ENTRY_FILE"
 LAUNCHER_PATH="$LAUNCHERS_DIR/$SELECTED_LAUNCHER"
 
 if [ -x "$LAUNCHER_PATH" ]; then
-  echo "$(date): Starting $SELECTED_LAUNCHER" >> "$LOG_FILE"
   START_TIME=$(date +%s)
-  
+
   "$LAUNCHER_PATH" &
   wait $!
 
   END_TIME=$(date +%s)
   PLAYTIME=$((END_TIME - START_TIME))
-  echo "$(date): Finished $SELECTED_LAUNCHER after $PLAYTIME seconds" >> "$LOG_FILE"
+
+  if [ $PLAYTIME -ge 5 ]; then
+    echo "$(date): Starting $SELECTED_LAUNCHER" >> "$LOG_FILE"
+    echo "$(date): Finished $SELECTED_LAUNCHER after $PLAYTIME seconds" >> "$LOG_FILE"
+  fi
   exit 0
 else
   echo "Selected launcher is not executable: $LAUNCHER_PATH"
