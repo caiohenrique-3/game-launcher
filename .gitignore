@@ -1,0 +1,7 @@
+launchers/*
+config/*
+data/*
+
+!launchers/example_native_game.sh
+!launchers/example_native_game.sh
+!config/example_name_map

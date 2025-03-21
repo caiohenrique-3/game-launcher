@@ -5,7 +5,7 @@
 SCRIPT_DIR="$(dirname "$(dirname "$0")")"
 LOG_FILE="$SCRIPT_DIR/data/game_time_log"
 LAST_ENTRY_FILE="$SCRIPT_DIR/data/last_selected"
-LAUNCHERS_DIR="$HOME/Scripts/Launchers"
+LAUNCHERS_DIR="$SCRIPT_DIR/launchers"
 UPDATE_DB_SCRIPT="$SCRIPT_DIR/bin/update_db.sh"
 
 touch "$LAST_ENTRY_FILE"
